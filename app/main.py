@@ -1,25 +1,44 @@
-from app.db.db import SessionLocal
-from app.db import crud
+"""Точка входа FastAPI.
+
+Запуск (из корня проекта):
+    uvicorn app.main:app --reload
+
+Документация (Swagger): http://127.0.0.1:8000/docs
+"""
+
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
+from app.api import books, categories
+from app.db.db import Base, engine
+from app.db import models  # noqa: F401 — регистрация таблиц в metadata
 
 
-def main() -> None:
-    with SessionLocal() as session:
-        categories = crud.get_categories(session)
-        if not categories:
-            print("БД пуста — запустите `python -m app.init_db`")
-            return
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """На старте поднимаем таблицы (engine и SessionLocal уже настроены)."""
+    Base.metadata.create_all(bind=engine)
+    yield
 
-        for cat in categories:
-            print(f"\n=== {cat.title} ===")
-            books = crud.get_books_by_category(session, cat.id)
-            if not books:
-                print("  (нет книг)")
-                continue
-            for b in books:
-                print(f"• {b.title} — {b.price} ₽")
-                print(f"  описание: {b.description}")
-                print(f"  url:      {b.url or '—'}")
+app = FastAPI(
+    title="Octagon Books API",
+    description="Учебный API для категорий и книг (FastAPI + SQLAlchemy + PostgreSQL).",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+app.include_router(categories.router)
+app.include_router(books.router)
+
+
+@app.get("/health", tags=["service"])
+def health() -> dict:
+    """Проверка, что сервис жив."""
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

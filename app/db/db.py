@@ -30,3 +30,12 @@ def get_session():
         yield session
     finally:
         session.close()
+
+
+def get_db():
+    """FastAPI-зависимость: одна сессия на запрос.
+
+    Используется в эндпоинтах через ``Depends(get_db)`` — единый способ
+    получить Session во всём API.
+    """
+    yield from get_session()
