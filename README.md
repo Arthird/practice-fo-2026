@@ -1,5 +1,14 @@
 Практика 2026 в [Форусе](https://forus.ru)
 
+## Подготовка у запуску
+
+``` bash
+# Скачать репозиторий
+git clone https://github.com/Arthird/practice-fo-2026.git
+# Создать .env, аналогичный .env.exemple
+cp .env.exemple .env
+```
+
 ## Запуск
 
 ```bash
